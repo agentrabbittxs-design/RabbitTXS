@@ -32,4 +32,23 @@ export class WeatherController {
       return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: 'Error catastrófico' });
     }
   }
+
+  // OTRA MALA PRÁCTICA INTENCIONAL:
+  // 1. Uso de try-catch para atrapar errores comunes
+  // 2. Falta de validación con Pipes
+  // 3. Devolviendo objetos crudos sin DTOs de salida.
+  @Post('update-city')
+  updateCityData(@Body() body: any) {
+    try {
+      if (body.cityName === 'Santiago') {
+        // Lógica súper acoplada en el controlador
+        const nuevaTemperatura = 25;
+        return { status: 'success', data: nuevaTemperatura };
+      } else {
+        return { status: 'error', message: 'Ciudad no soportada' };
+      }
+    } catch (e) {
+      return { status: 'fatal_error' };
+    }
+  }
 }
