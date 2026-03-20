@@ -81,6 +81,12 @@
     socket.on('weatherUpdate', (data) => {
       console.log('Actualización de clima recibida:', data);
       
+      // Validar el payload de entrada sugerido por CodeRabbit para evitar caídas (ej: toFixed() de undefined)
+      if (!data || typeof data.temperature !== 'number' || typeof data.humidity !== 'number') {
+        console.warn('⚠️ Payload inválido recibido (ignorado):', data);
+        return;
+      }
+      
       // Forzar un "re-render" en la animación removiendo y volviendo a agregar la clase
       stateContainerElements.forEach(el => {
         el.classList.remove('fade-update');
@@ -88,10 +94,10 @@
         el.classList.add('fade-update');
       });
 
-      // Actualizar el DOM
-      cityEl.textContent = data.city;
+      // Actualizar el DOM de forma segura
+      cityEl.textContent = data.city || 'Desconocido';
       tempEl.textContent = data.temperature.toFixed(1);
-      descEl.textContent = data.description;
+      descEl.textContent = data.description || '';
       humEl.textContent = data.humidity + '%';
     });
   </script>
