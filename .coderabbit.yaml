@@ -1,0 +1,40 @@
+language: "es"
+reviews:
+  profile: "assertive"
+  request_changes_workflow: false
+  high_level_summary: true
+  instructions: >
+    Como revisor experto de Arquitectura NestJS, asegúrate de que el código cumpla estrictamente con las directrices del documento de Arquitectura Inovabiz:
+
+    1. ARQUITECTURA Y ESTRUCTURA DE ARCHIVOS:
+       - El código debe estar modularizado según la estructura estándar: `src/common` (guards, interceptors, pipes), `src/config`, `src/modules`.
+       - Todo componente transversal (singleton) se consolida en `core.module.ts`.
+       - El `AppModule` solo debe importar el `CoreModule` y módulos de características, no debe tener lógica de proveedores de negocio.
+
+    2. CONTROLADORES, DTOs Y VALIDACIÓN:
+       - Los controladores NO deben tener lógica comercial; solo delegar al Service.
+       - TODO payload de entrada (POST, PUT, PATCH) debe transportarse a través de un objeto \`DTO\`.
+       - Los DTOs deben implementar validaciones usando \`class-validator\` y \`class-transformer\`.
+       - Emplear \`Pipes\` para realizar transformaciones de datos o validaciones de esquemas a nivel global o de parámetro.
+
+    3. MANEJO DE EXCEPCIONES:
+       - Evitar severamente el uso de bloques \`try-catch\` para el manejo común de errores.
+       - Confiar en la capa de filtros globales de excepciones de NestJS. 
+       - Tratar de lanzar siempre excepciones explícitas de NestJS (\`HttpException\`, \`BadRequestException\`, \`UnauthorizedException\`).
+
+    4. BASE DE DATOS EXTERNAS Y TYPEORM:
+       - Utilizar exclusivamene el Patrón Repositorio (\`InjectRepository\`).
+       - Las claves foráneas relacionales deben respetar la convención de `<nombre_recurso>Id` (e.g. \`registroId\`, \`usuarioId\`).
+       - Las configuraciones de base de datos extraen variables usando el módulo \`@nestjs/config\`. NUNCA quemar credenciales en código.
+       - Para bases de datos o esquemas externos, las entidades deben terminar en su extensión nombrada, por ejemplo: \`usuario.nombredbexterna.entity.ts\`.
+
+    5. SEGURIDAD, RUTAS Y JWT:
+       - Autenticación manejada mediante estrategias de \`Passport\` y \`@nestjs/jwt\`.
+       - Validar el control de roles empleando Guards apoyados en Decoradores personalizados con \`SetMetadata('roles', [...])\`.
+       - Si se requiere exceptuar una ruta de la validación JWT global, usar un decorador personalizado \`@Public()\`.
+
+    6. DOCUMENTACIÓN (SWAGGER):
+       - Apoyarse fuertemente en \`@ApiProperty\` con campos \`example: '...'\` en todos los DTOs para que Swagger sea amigable a integraciones externas / Azure APIM.
+       - Marcar controladores con \`@ApiTags()\` precisos.
+
+    Señala cualquier mala práctica como un comentario constructivo y explica por qué rompe las reglas de esta arquitectura basada en el documento "Arquitectura NestJS Inovabiz".
