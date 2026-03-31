@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Real-Time Weather Dashboard</title>
+  <!-- Fuente moderna -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS para el diseño estilizado -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Socket.io interactúa con nuestro Gateway de NestJS -->
+  <script src="/socket.io/socket.io.js"></script>
+
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    /* Animación simple de transición de valores */
+    .fade-update { animation: fadeIn 0.5s ease-in-out; }
+    @keyframes fadeIn {
+      0% { opacity: 0.3; transform: scale(0.98); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-blue-900 via-gray-900 to-black h-screen flex items-center justify-center m-0 text-white">
+
+  <div class="bg-white/10 backdrop-blur-md border border-white/20 p-10 rounded-3xl shadow-2xl text-center w-80 lg:w-96 relative overflow-hidden">
+    <!-- Indicador de estado de conexión -->
+    <div id="statusDot" class="absolute top-4 right-4 w-3 h-3 rounded-full bg-red-500 animate-pulse" title="Desconectado"></div>
+
+    <h2 class="text-xs uppercase tracking-widest text-gray-400 mb-2 font-semibold">Clima en Vivo</h2>
+    <h1 id="city" class="text-3xl font-bold mb-6 truncate fade-update">Cargando...</h1>
+    
+    <div class="flex items-center justify-center gap-2 text-6xl font-extrabold mb-2 text-blue-200 fade-update" id="temp-container">
+      <span id="temperature">--</span><span class="text-4xl text-blue-400">°C</span>
+    </div>
+    
+    <p id="description" class="text-lg font-medium text-gray-300 capitalize mb-6 fade-update">Esperando datos</p>
+
+    <div class="flex justify-between items-center bg-black/30 rounded-2xl p-4 fade-update" id="details-container">
+      <div class="flex flex-col items-center w-full">
+        <span class="text-xs text-gray-400 uppercase tracking-wide">Humedad</span>
+        <span id="humidity" class="text-xl font-semibold text-blue-100">--%</span>
+      </div>
+    </div>
+    
+    <div class="mt-6 text-xs text-gray-500 font-mono">
+      Actualización en vivo cada 10s
+    </div>
+  </div>
+
+  <script>
+    // Conectarse dinámicamente al mismo host que sirve este archivo estático
+    const socket = io();
+
+    // Referencias a los elementos del DOM
+    const cityEl = document.getElementById('city');
+    const tempEl = document.getElementById('temperature');
+    const descEl = document.getElementById('description');
+    const humEl = document.getElementById('humidity');
+    const stateContainerElements = [cityEl, document.getElementById('temp-container'), descEl, document.getElementById('details-container')];
+    const statusDot = document.getElementById('statusDot');
+
+    // Escuchar cuando la conexión es exitosa
+    socket.on('connect', () => {
+      console.log('Conectado al servidor Socket.io');
+      statusDot.classList.replace('bg-red-500', 'bg-green-500');
+      statusDot.title = 'Conectado';
+    });
+
+    // Escuchar cuando se pierde la conexión
+    socket.on('disconnect', () => {
+      console.log('Desconectado del servidor Socket.io');
+      statusDot.classList.replace('bg-green-500', 'bg-red-500');
+      statusDot.title = 'Desconectado';
+    });
+
+    /**
+     * Escucha el evento 'weatherUpdate' que emite nuestro WeatherGateway
+     * @param {Object} data - Objeto equivalente al WeatherResponseDto
+     */
+    socket.on('weatherUpdate', (data) => {
+      console.log('Actualización de clima recibida:', data);
+      
+      // Validar el payload de entrada sugerido por CodeRabbit para evitar caídas (ej: toFixed() de undefined)
+      if (!data || typeof data.temperature !== 'number' || typeof data.humidity !== 'number') {
+        console.warn('⚠️ Payload inválido recibido (ignorado):', data);
+        return;
+      }
+      
+      // Forzar un "re-render" en la animación removiendo y volviendo a agregar la clase
+      stateContainerElements.forEach(el => {
+        el.classList.remove('fade-update');
+        void el.offsetWidth; // Trigger reflow para reiniciar la animación
+        el.classList.add('fade-update');
+      });
+
+      // Actualizar el DOM de forma segura
+      cityEl.textContent = data.city || 'Desconocido';
+      tempEl.textContent = data.temperature.toFixed(1);
+      descEl.textContent = data.description || '';
+      humEl.textContent = data.humidity + '%';
+    });
+  </script>
+</body>
+</html>
